@@ -1,8 +1,10 @@
 import React from 'react'
+import _ from 'lodash/fp'
+
 import AceEditor from 'react-ace'
-import Button from 'material-ui/Button'
 import Card, { CardContent } from 'material-ui/Card'
 import Grid from 'material-ui/Grid'
+import { LinearProgress } from 'material-ui/Progress'
 
 import 'brace/mode/java'
 import 'brace/theme/github'
@@ -15,19 +17,22 @@ class App extends React.Component {
     output: {
       status: '',
       result: ''
-    }
+    },
+    waiting: false
   }
 
   componentDidMount () {
     websocket = new window.WebSocket('ws://localhost:8004')
     websocket.onmessage = event => {
-      this.setState({ output: JSON.parse(event.data) })
+      this.setState({ waiting: false, output: JSON.parse(event.data) })
     }
   }
 
-  handleSendMessage = () => {
-    websocket.send(this.state.input)
-  }
+  handleSendMessage = _.debounce(1000, () => {
+    this.setState({ waiting: true }, () => {
+      websocket.send(this.state.input)
+    })
+  })
 
   render () {
     return (
@@ -41,14 +46,12 @@ class App extends React.Component {
               onChange={input => this.setState({ input }, this.handleSendMessage)}
               value={this.state.input}
               editorProps={{ $blockScrolling: true }} />
+            {this.state.waiting && <LinearProgress />}
           </Card>
         </Grid>
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Button variant='fab' color='secondary'>Magnus</Button>
-              <Button variant='raised' color='primary'>Magnus</Button>
-              <h1>Output</h1>
               <p>Status: {this.state.output.status}</p>
               <p>Result: {this.state.output.result}</p>
             </CardContent>
