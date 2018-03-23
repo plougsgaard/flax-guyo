@@ -1,4 +1,8 @@
 import React from 'react'
+import AceEditor from 'react-ace'
+
+import 'brace/mode/java'
+import 'brace/theme/github'
 
 let websocket
 
@@ -10,6 +14,7 @@ class App extends React.Component {
       result: ''
     }
   }
+
   componentDidMount () {
     websocket = new window.WebSocket('ws://localhost:8004')
     websocket.onmessage = event => {
@@ -17,19 +22,20 @@ class App extends React.Component {
     }
   }
 
-
-  handleSendMessage = e => {
-    e && e.preventDefault && e.preventDefault()
+  handleSendMessage = () => {
     websocket.send(this.state.input)
   }
+
   render () {
     return (
       <div>
-        <h1>Input</h1>
-        <form onSubmit={this.handleSendMessage}>
-          <input value={this.state.input} onChange={e => this.setState({ input: e.target.value }, this.handleSendMessage)} />
-          <button onClick={this.handleSendMessage}>Click to send message</button>
-        </form>
+        <AceEditor
+          style={{ width: '500px', height: '100px' }}
+          mode='java'
+          theme='github'
+          onChange={input => this.setState({ input }, this.handleSendMessage)}
+          value={this.state.input}
+          editorProps={{ $blockScrolling: true }} />
         <h1>Output</h1>
         <p>Status: {this.state.output.status}</p>
         <p>Result: {this.state.output.result}</p>
